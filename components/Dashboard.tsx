@@ -12,6 +12,7 @@ interface DashboardProps {
 
 export const Dashboard: React.FC<DashboardProps> = ({ employees, logs, onClockIn, onClockOut }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [employeeToClockOut, setEmployeeToClockOut] = useState<string | null>(null);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -30,8 +31,42 @@ export const Dashboard: React.FC<DashboardProps> = ({ employees, logs, onClockIn
     .filter(log => log.date === todayStr && log.status === 'completed' && !activeEmployeeIds.includes(log.employeeId))
     .map(log => log.employeeId);
 
+  const confirmClockOut = () => {
+    if (employeeToClockOut) {
+      onClockOut(employeeToClockOut);
+      setEmployeeToClockOut(null);
+    }
+  };
+
+  const getClockOutName = () => employees.find(e => e.id === employeeToClockOut)?.name || 'je';
+
   return (
-    <div className="space-y-8 animate-fade-in flex flex-col h-full">
+    <div className="space-y-8 animate-fade-in flex flex-col h-full relative">
+      {/* Clock Out Confirmation Modal */}
+      {employeeToClockOut && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+           <div className="bg-neutral-900 border border-levant-gold rounded-2xl p-8 max-w-md w-full shadow-2xl transform scale-100 transition-all">
+              <div className="flex flex-col items-center text-center space-y-4">
+                 <div className="w-16 h-16 rounded-full bg-neutral-800 text-levant-gold flex items-center justify-center mb-2 border border-levant-gold/30">
+                    <LogOut size={32} />
+                 </div>
+                 <h3 className="text-2xl font-serif text-white">Uitklokken Bevestigen</h3>
+                 <p className="text-neutral-400">
+                   <strong className="text-white">{getClockOutName()}</strong>, weet je zeker dat je wilt uitklokken?
+                 </p>
+                 <div className="flex gap-4 w-full mt-6">
+                    <Button variant="secondary" onClick={() => setEmployeeToClockOut(null)} className="flex-1 py-4">
+                       Annuleren
+                    </Button>
+                    <Button variant="primary" onClick={confirmClockOut} className="flex-1 py-4">
+                       Bevestigen
+                    </Button>
+                 </div>
+              </div>
+           </div>
+        </div>
+      )}
+
       <header className="flex flex-col md:flex-row justify-between items-center border-b border-levant-gold/20 pb-8">
         <div className="text-center md:text-left">
           <h2 className="text-4xl md:text-5xl font-serif text-white mb-2">Wie ben jij?</h2>
@@ -119,7 +154,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ employees, logs, onClockIn
                     <Button 
                       variant="clock-out" 
                       size="xl"
-                      onClick={() => onClockOut(employee.id)}
+                      onClick={() => setEmployeeToClockOut(employee.id)}
                       className="w-full py-6 md:py-8 text-lg"
                     >
                       <LogOut size={28} /> UITKLOKKEN
